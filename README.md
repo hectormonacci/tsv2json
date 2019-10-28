@@ -10,7 +10,7 @@ The utility is written wholly in Nim and has no external dependencies.
 
 Input file or stream is checked for the presence of double quotes, and turns them into single quotes, so as to not break JSON syntax.
 
-When one TSV record is accidentally split over two or more lines (e.g., because of some field carryinf CR/LF characters), tsv2json attempts a restoration of a good record by turning CR or LF characters into a space character.
+When one TSV record is accidentally split over two or more lines (e.g., because of some field carrying CR/LF characters), tsv2json attempts a restoration of a good record by turning CR or LF characters into a space character.
 
 A reasonably fast and small executable can be made by issuing this compiling command:
 
