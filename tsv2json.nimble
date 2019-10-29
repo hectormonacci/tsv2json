@@ -1,6 +1,6 @@
 # Package
 
-version       = "0.1.3"
+version       = "0.1.4"
 author        = "Héctor M. Monacci"
 description   = "Turn TSV file or stream into JSON file or stream"
 license       = "MIT"

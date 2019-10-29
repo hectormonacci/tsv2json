@@ -24,23 +24,41 @@ var
 
 
 proc show_version =
-  stderr.styledWriteLine styleBright, fgGreen, thisProgramName & ", version 0.1.3"
+  let version_text = """
+tsv2json, version 0.1.4
+"""
+  stderr.writeLine version_text
+  #stderr.styledWriteLine styleBright, fgGreen, thisProgramName & ", version 0.1.3"
 
 
 proc show_help =
+  let help_text = """
+Usage:
+    tsv2json infile.tsv  [>outfile.json]
+    tsv2json <infile.tsv [>outfile.json]
+    tsv2json [option]
+
+Options:
+    -h, --help              Display this message
+    -v, --version           Print version info and exit
+
+Authors:
+    Héctor M. Monacci (2019)
+"""
   show_version()
-  stderr.writeLine ""
-  stderr.styledWriteLine styleBright, "Usage:"
-  stderr.writeLine "    " & thisProgramName & " infile.tsv  [>outfile.json]"
-  stderr.writeLine "    " & thisProgramName & " <infile.tsv [>outfile.json]"
-  stderr.writeLine "    " & thisProgramName & " [option]"
-  stderr.writeLine ""
-  stderr.styledWriteLine styleBright, "Options:"
-  stderr.writeLine "    -h, --help              Display this message"
-  stderr.writeLine "    -v, --version           Print version info and exit"
-  stderr.writeLine ""
-  stderr.styledWriteLine styleBright, "Authors:"
-  stderr.writeLine "    Héctor M. Monacci (2019)"
+  stderr.writeLine help_text
+  #stderr.writeLine ""
+  #stderr.styledWriteLine styleBright, "Usage:"
+  #stderr.writeLine "    " & thisProgramName & " infile.tsv  [>outfile.json]"
+  #stderr.writeLine "    " & thisProgramName & " <infile.tsv [>outfile.json]"
+  #stderr.writeLine "    " & thisProgramName & " [option]"
+  #stderr.writeLine ""
+  #stderr.styledWriteLine styleBright, "Options:"
+  #stderr.writeLine "    -h, --help              Display this message"
+  #stderr.writeLine "    -v, --version           Print version info and exit"
+  #stderr.writeLine ""
+  #stderr.styledWriteLine styleBright, "Authors:"
+  #stderr.writeLine "    Héctor M. Monacci (2019)"
 
 
 proc show_statistics =
@@ -67,8 +85,13 @@ proc alert_and_exit =
 
 
 proc cmdline =
-  input_file = stdin
- 
+# https://nim-lang.org/docs/os.html#FileInfo
+  if isatty(stdin):
+    show_help()
+    quit QuitSuccess
+  else:
+    input_file = stdin
+
   for kind, key, value in getOpt():
     case kind
     of cmdArgument:
@@ -90,7 +113,6 @@ proc cmdline =
         quit QuitFailure
     of cmdEnd:
       discard
-
 
 proc main =
   var
