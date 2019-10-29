@@ -25,7 +25,7 @@ var
 
 proc show_version =
   let version_text = """
-tsv2json, version 0.1.5
+tsv2json, version 0.1.6
 """
   stderr.writeLine version_text
   #stderr.styledWriteLine styleBright, fgGreen, thisProgramName & ", version 0.1.3"
@@ -85,22 +85,21 @@ proc alert_and_exit =
 
 
 proc cmdline =
-# https://nim-lang.org/docs/os.html#FileInfo
-#  if isatty(stdin):
-#    show_help()
-#    quit QuitSuccess
-#  else:
   input_file = stdin
+
+  var has_parameters: bool = false
 
   for kind, key, value in getOpt():
     case kind
     of cmdArgument:
+      has_parameters = true
       if existsFile key:
         input_file = open key
       else:
         stderr.styledWriteLine styleBright, fgRed, "Cannot find file \"" & key & "\"."
         quit QuitFailure
     of cmdLongOption, cmdShortOption:
+      has_parameters = true
       case key
       of "h", "help":
         show_help()
@@ -109,10 +108,18 @@ proc cmdline =
         show_version()
         quit QuitSuccess
       else:
-        stderr.writeLine "Unknown option: \"" & key & "\"."
+        stderr.styledWriteLine styleBright, fgRed, "Unknown option: \"" & key & "\"."
+        stderr.writeLine ""
+        show_help()
         quit QuitFailure
     of cmdEnd:
       discard
+
+  if has_parameters == false:
+    if isatty(stdin):
+      show_help()
+      quit QuitSuccess
+
 
 proc main =
   var
