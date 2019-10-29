@@ -28,7 +28,6 @@ proc show_version =
 tsv2json, version 0.1.6
 """
   stderr.writeLine version_text
-  #stderr.styledWriteLine styleBright, fgGreen, thisProgramName & ", version 0.1.3"
 
 
 proc show_help =
@@ -47,18 +46,6 @@ Authors:
 """
   show_version()
   stderr.writeLine help_text
-  #stderr.writeLine ""
-  #stderr.styledWriteLine styleBright, "Usage:"
-  #stderr.writeLine "    " & thisProgramName & " infile.tsv  [>outfile.json]"
-  #stderr.writeLine "    " & thisProgramName & " <infile.tsv [>outfile.json]"
-  #stderr.writeLine "    " & thisProgramName & " [option]"
-  #stderr.writeLine ""
-  #stderr.styledWriteLine styleBright, "Options:"
-  #stderr.writeLine "    -h, --help              Display this message"
-  #stderr.writeLine "    -v, --version           Print version info and exit"
-  #stderr.writeLine ""
-  #stderr.styledWriteLine styleBright, "Authors:"
-  #stderr.writeLine "    Héctor M. Monacci (2019)"
 
 
 proc show_statistics =
