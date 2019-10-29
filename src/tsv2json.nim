@@ -25,7 +25,7 @@ var
 
 proc show_version =
   let version_text = """
-tsv2json, version 0.1.4
+tsv2json, version 0.1.5
 """
   stderr.writeLine version_text
   #stderr.styledWriteLine styleBright, fgGreen, thisProgramName & ", version 0.1.3"
@@ -86,11 +86,11 @@ proc alert_and_exit =
 
 proc cmdline =
 # https://nim-lang.org/docs/os.html#FileInfo
-  if isatty(stdin):
-    show_help()
-    quit QuitSuccess
-  else:
-    input_file = stdin
+#  if isatty(stdin):
+#    show_help()
+#    quit QuitSuccess
+#  else:
+  input_file = stdin
 
   for kind, key, value in getOpt():
     case kind
