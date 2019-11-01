@@ -9,29 +9,31 @@
 
 import terminal, strutils, parseopt, os
 
+let my_version = "0.1.7"
+let my_name = getAppFilename().splitPath.tail
+
 var
-  thisProgramName: string
   input_file: File
   this_record: string
-  num_of_tabs_of_this_record: int
-  num_of_fields_of_this_record_base1: int
+  num_of_tabs_in_this_record: int
+  num_of_fields_in_this_record_base1: int
   num_of_errors_found: int
   num_of_errors_corrected: int
   num_of_records_processed: int
   num_of_lines_processed: int
-  num_of_fields_of_header_base1: int
+  num_of_fields_in_header_base1: int
   there_was_crisis: bool = false
+  be_verbose: bool = false
 
 
 proc show_version =
-  let version_text = """
-tsv2json, version 0.1.6
-"""
-  stderr.writeLine version_text
+  stderr.writeLine my_name & ", version " & my_version
+  echo ""
 
 
 proc show_help =
-  let help_text = """
+  show_version()
+  stderr.writeLine """
 Usage:
     tsv2json infile.tsv  [>outfile.json]
     tsv2json <infile.tsv [>outfile.json]
@@ -40,12 +42,11 @@ Usage:
 Options:
     -h, --help              Display this message
     -v, --version           Print version info and exit
+    -V, --verbose           Print more explicit messages
 
 Authors:
     Héctor M. Monacci (2019)
 """
-  show_version()
-  stderr.writeLine help_text
 
 
 proc show_statistics =
@@ -62,8 +63,8 @@ proc show_statistics =
 
 
 proc alert_and_exit =
-  num_of_fields_of_this_record_base1 = num_of_tabs_of_this_record + 1
-  stderr.styledWriteLine styleBright, fgRed, "Header line has " & $num_of_fields_of_header_base1 & " fields but this record has " & $num_of_fields_of_this_record_base1 & ":"
+  num_of_fields_in_this_record_base1 = num_of_tabs_in_this_record + 1
+  stderr.styledWriteLine styleBright, fgRed, "Error: header line has " & $num_of_fields_in_header_base1 & " fields but this record has " & $num_of_fields_in_this_record_base1 & ":"
   stderr.writeLine this_record.replace("\t", "\n")
   stderr.styledWriteLine styleBright, fgRed, "The above error was found at line " & $num_of_lines_processed & " of TSV input."
   there_was_crisis = true
@@ -77,16 +78,15 @@ proc cmdline =
   var has_parameters: bool = false
 
   for kind, key, value in getOpt():
+    has_parameters = true
     case kind
     of cmdArgument:
-      has_parameters = true
       if existsFile key:
         input_file = open key
       else:
-        stderr.styledWriteLine styleBright, fgRed, "Cannot find file \"" & key & "\"."
+        stderr.styledWriteLine styleBright, fgRed, "Error: cannot find file \"" & key & "\"."
         quit QuitFailure
     of cmdLongOption, cmdShortOption:
-      has_parameters = true
       case key
       of "h", "help":
         show_help()
@@ -94,8 +94,10 @@ proc cmdline =
       of "v", "version":
         show_version()
         quit QuitSuccess
+      of "V", "verbose":
+        be_verbose = true
       else:
-        stderr.styledWriteLine styleBright, fgRed, "Unknown option: \"" & key & "\"."
+        stderr.styledWriteLine styleBright, fgRed, "Error: unknown option: \"" & key & "\"."
         stderr.writeLine ""
         show_help()
         quit QuitFailure
@@ -111,23 +113,21 @@ proc cmdline =
 proc main =
   var
     header: string
-    fields_of_header: seq[string]
-    num_of_fields_of_header_base0: int
+    fields_in_header: seq[string]
+    num_of_fields_in_header_base0: int
     is_first_record: bool = true
-    fields_of_this_record: seq[string]
-    num_of_tabs_header: int
+    fields_in_this_record: seq[string]
+    num_of_tabs_in_header: int
     completion_record: string
-
-  thisProgramName = getAppFilename().extractFilename()
 
   cmdline()
 
   if input_file.readLine header:
-    inc num_of_lines_processed
-    fields_of_header = header.replace("\"", "'").split "\t"
-    num_of_fields_of_header_base1 = fields_of_header.len
-    num_of_fields_of_header_base0 = num_of_fields_of_header_base1 - 1
-    num_of_tabs_header = num_of_fields_of_header_base0
+    num_of_lines_processed.inc
+    fields_in_header = header.replace("\"", "'").split "\t"
+    num_of_fields_in_header_base1 = fields_in_header.len
+    num_of_fields_in_header_base0 = num_of_fields_in_header_base1 - 1
+    num_of_tabs_in_header = num_of_fields_in_header_base0
   else:
     alert_and_exit()
 
@@ -135,17 +135,16 @@ proc main =
 
   while input_file.readLine this_record:
     num_of_lines_processed.inc
-    this_record = this_record.replace("\"", "'")
-    num_of_tabs_of_this_record = this_record.count "\t"
+    num_of_tabs_in_this_record = this_record.count "\t"
 
-    while num_of_tabs_of_this_record != num_of_tabs_header:
+    while num_of_tabs_in_this_record != num_of_tabs_in_header:
       num_of_errors_found.inc
-      if num_of_tabs_of_this_record > num_of_tabs_header:
+      if num_of_tabs_in_this_record > num_of_tabs_in_header:
         alert_and_exit()
       if input_file.readLine completion_record:
         num_of_lines_processed.inc
-        this_record.add(" " & completion_record.replace("\"", "'"))
-        num_of_tabs_of_this_record = this_record.count "\t"
+        this_record.add(" " & completion_record)
+        num_of_tabs_in_this_record = this_record.count "\t"
         num_of_errors_corrected.inc
       else:
         alert_and_exit()
@@ -158,15 +157,16 @@ proc main =
     stdout.write "{"
 
     num_of_records_processed.inc
-    fields_of_this_record = this_record.split "\t"
-    for num_of_this_field in 0..num_of_fields_of_header_base0:
-      stdout.write "\"" & fields_of_header[num_of_this_field] & """":"""" & fields_of_this_record[num_of_this_field] & "\""
-      if num_of_this_field < num_of_fields_of_header_base0:
+    fields_in_this_record = this_record.replace("\"", "'").split "\t"
+    for each_field in 0..num_of_fields_in_header_base0:
+      stdout.write "\"" & fields_in_header[each_field] & """":"""" & fields_in_this_record[each_field] & "\""
+      if each_field < num_of_fields_in_header_base0:
         stdout.write ","
 
     stdout.write "}"
 
   echo "\n]"
-  show_statistics()
+  if be_verbose:
+    show_statistics()
 
 main()
