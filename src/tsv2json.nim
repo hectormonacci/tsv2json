@@ -7,9 +7,11 @@
 
 # nim -f c -d:danger --app:console --opt:speed --passc:-flto tsv2json.nim && strip -s tsv2json && upx --best tsv2json
 
+# nim -f --opt:speed --app:console --gcc.exe:x86_64-linux-musl-gcc --gcc.linkerexe:x86_64-linux-musl-gcc --passL:-static c -d:danger --passc:-O3 tsv2json.nim && strip -s tsv2json && upx --best tsv2json
+
 import terminal, strutils, parseopt, os
 
-let my_version = "0.1.7"
+let my_version = "0.1.8"
 let my_name = getAppFilename().splitPath.tail
 
 var
@@ -118,7 +120,7 @@ proc main =
     is_first_record: bool = true
     fields_in_this_record: seq[string]
     num_of_tabs_in_header: int
-    completion_record: string
+    next_record_for_completion: string
 
   cmdline()
 
@@ -141,11 +143,14 @@ proc main =
       num_of_errors_found.inc
       if num_of_tabs_in_this_record > num_of_tabs_in_header:
         alert_and_exit()
-      if input_file.readLine completion_record:
-        num_of_lines_processed.inc
-        this_record.add(" " & completion_record)
-        num_of_tabs_in_this_record = this_record.count "\t"
-        num_of_errors_corrected.inc
+      if input_file.readLine next_record_for_completion:
+        if (next_record_for_completion.count "\t") < num_of_tabs_in_header:
+          num_of_lines_processed.inc
+          this_record.add(" " & next_record_for_completion)
+          num_of_tabs_in_this_record = this_record.count "\t"
+          num_of_errors_corrected.inc
+        else:
+          alert_and_exit()  
       else:
         alert_and_exit()
 
